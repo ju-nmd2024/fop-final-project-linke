@@ -1,4 +1,5 @@
-let gameState = 'start'; 
+//variables definition of all
+let gameState = 'start';
 let paddle;
 let ball;
 let bricks = [];
@@ -10,13 +11,16 @@ let lives = 3;
 let gridSize = 40;
 let bgColors = [];
 
+//reference from chatgpt https://chatgpt.com/share/683591cc-453c-8000-ba08-35cdd6674b4d
+//reference from chatgpt https://chatgpt.com/share/68359252-aacc-8000-8510-707eb48ff79f
+
 function setup() {
   createCanvas(800, 600);
   randomSeed(1);
   generateBgColors();
   setupGame();
 }
-
+// back ground
 function generateBgColors() {
   bgColors = [];
   for (let y = 0; y < height; y += gridSize) {
@@ -28,18 +32,6 @@ function generateBgColors() {
         bgColors.push(color(255, 255, 255, 120 + random(-20, 20)));
       }
     }
-  }
-}
-
-function draw() {
-  drawBackground();
-
-  if (gameState === 'start') {
-    drawStartScreen();
-  } else if (gameState === 'playing') {
-    playGame();
-  } else if (gameState === 'gameover') {
-    drawGameOver();
   }
 }
 
@@ -56,15 +48,31 @@ function drawBackground() {
   }
 }
 
+//Main loop of the game
+function draw() {
+  drawBackground();
+
+  if (gameState === 'start') {
+    drawStartScreen();
+  } else if (gameState === 'playing') {
+    playGame();
+  } else if (gameState === 'gameover') {
+    drawGameOver();
+  } else if (gameState === 'win') {
+    drawWinScreen();
+  }
+}
+
+//Game elemrnts setup
 function setupGame() {
-  paddle = { x: width / 2 - 50, y: height - 30, w: 100, h: 15, speed: 7 };
-  ball = { x: width / 2, y: height / 2, r: 10, dx: 4, dy: -4 };
+  paddle = { x: width / 2 - 50, y: height - 30, w: 100, h: 15, speed: 10 };
+  ball = { x: width / 2, y: height / 2, r: 10, dx: 6, dy: -6 };
 
   bricks = [];
-  let brickW = (width / cols) * 0.9;  
+  let brickW = (width / cols) * 0.9;
   let brickH = 30;
-  let rowGap = 20; 
-  let colGap = (width / cols) * 0.1; 
+  let rowGap = 20;
+  let colGap = (width / cols) * 0.1;
 
   let layout = [
     [0, 1, 0, 1, 0, 1, 0],
@@ -88,26 +96,36 @@ function setupGame() {
     }
   }
 }
-
+//display of the different pages
 function drawStartScreen() {
   fill(0);
   textSize(32);
   textAlign(CENTER, CENTER);
-  text('老鼠弹球偷芝士', width / 2, height / 2 - 40);
+  text('Mice and Cheese', width / 2, height / 2 - 40);
   textSize(20);
-  text('按空格键开始游戏', width / 2, height / 2);
+  text('Press SPACE to start', width / 2, height / 2);
 }
 
 function drawGameOver() {
   fill(0);
   textSize(32);
   textAlign(CENTER, CENTER);
-  text('游戏结束', width / 2, height / 2 - 40);
-  text('你的得分：' + score, width / 2, height / 2);
+  text('Try to get more cheese next time~', width / 2, height / 2 - 40);
+  text('Your Score: ' + score, width / 2, height / 2);
   textSize(20);
-  text('按空格键重新开始', width / 2, height / 2 + 40);
+  text('Press SPACE to restart', width / 2, height / 2 + 40);
 }
 
+function drawWinScreen() {
+  fill(0);
+  textSize(32);
+  textAlign(CENTER, CENTER);
+  text('YOU GOT ALL THE CHEESE!', width / 2, height / 2 - 40);
+  text('Your Score: ' + score, width / 2, height / 2);
+  textSize(20);
+  text('Press SPACE to play again', width / 2, height / 2 + 40);
+}
+//Logic of the gameplay
 function playGame() {
   movePaddle();
   moveBall();
@@ -120,11 +138,16 @@ function playGame() {
   if (lives <= 0) {
     gameState = 'gameover';
   }
-}
 
+  let cheeseLeft = bricks.filter(b => b.active && !b.isPoison).length;
+  if (cheeseLeft === 0) {
+    gameState = 'win';
+  }
+}
+//key pressed function
 function keyPressed() {
   if (key === ' ') {
-    if (gameState === 'start' || gameState === 'gameover') {
+    if (gameState === 'start' || gameState === 'gameover' || gameState === 'win') {
       score = 0;
       lives = 3;
       setupGame();
@@ -142,7 +165,7 @@ function movePaddle() {
   }
   paddle.x = constrain(paddle.x, 0, width - paddle.w);
 }
-
+//the movement of the ball and boundries dectection
 function moveBall() {
   ball.x += ball.dx;
   ball.y += ball.dy;
@@ -168,11 +191,11 @@ function moveBall() {
     lives--;
     ball.x = width / 2;
     ball.y = height / 2;
-    ball.dx = random([-4, 4]);
-    ball.dy = -4;
+    ball.dx = random([-6, 6]);
+    ball.dy = -6;
   }
 }
-
+//The relationship between the ball and diffrents bricks
 function checkCollisions() {
   for (let brick of bricks) {
     if (brick.active) {
@@ -186,7 +209,7 @@ function checkCollisions() {
         brick.active = false;
 
         if (brick.isPoison) {
-          score -= 2;
+          score -= 1;
         } else {
           score++;
         }
@@ -196,6 +219,7 @@ function checkCollisions() {
   }
 }
 
+// Draw bricks elements
 function drawBricks() {
   for (let brick of bricks) {
     if (brick.active) {
@@ -212,15 +236,14 @@ function drawBricks() {
         ellipse(-7.5, -5, 10, 10);
         ellipse(7.5, -5, 10, 10);
       } else {
-        //cheese
         fill(255, 230, 100);
         stroke(255, 200, 80);
         strokeWeight(2);
         beginShape();
-        vertex(-brick.w * 0.4, brick.h * 0.3);  
-        vertex(brick.w * 0.4, brick.h * 0.3);   
-        vertex(brick.w * 0.4, -brick.h * 0.3);   
-        vertex(-brick.w * 0.4, -brick.h * 0.3); 
+        vertex(-brick.w * 0.4, brick.h * 0.3);
+        vertex(brick.w * 0.4, brick.h * 0.3);
+        vertex(brick.w * 0.4, -brick.h * 0.3);
+        vertex(-brick.w * 0.4, -brick.h * 0.3);
         endShape(CLOSE);
         noStroke();
         fill(240, 180, 50);
@@ -234,12 +257,12 @@ function drawBricks() {
     }
   }
 }
-
+//paddle
 function drawPaddle() {
   fill(100);
   rect(paddle.x, paddle.y, paddle.w, paddle.h);
 }
-
+// draw mian character
 function drawBall() {
   let cx = ball.x;
   let cy = ball.y;
@@ -290,11 +313,11 @@ function drawBall() {
   ellipse(cx + 11, cy + 15.5, 1, 2);
   ellipse(cx + 14, cy + 15.5, 1, 2);
 }
-
+//game numerical data
 function drawHUD() {
   fill(0);
   textSize(16);
   textAlign(LEFT, TOP);
-  text('得分: ' + score, 10, 10);
-  text('血量: ' + lives, 10, 30);
+  text('Score: ' + score, 10, 10);
+  text('Lives: ' + lives, 10, 30);
 }
